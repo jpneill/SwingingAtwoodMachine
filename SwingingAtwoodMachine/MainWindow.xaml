@@ -4,5 +4,23 @@
         Title="MainWindow" Height="350" Width="525">
     <Canvas Name="PaintCanvas">
         <Button Canvas.Left="46" Canvas.Top="274" Content="Button" Height="23" Name="button1" Width="75" Click="button1_Click" />
+        <Line
+            X1="175" Y1="100"
+            X2="360" Y2="100"
+            Stroke="Black"
+            StrokeThickness="2"
+            />
+        <Ellipse
+            Fill="Blue"
+            Height="10"
+            Width="10"
+            Canvas.Left="175" 
+            Canvas.Top="100" />
+        <Ellipse
+            Fill="Blue"
+            Height="10"
+            Width="10"
+            Canvas.Left="350" 
+            Canvas.Top="100" />
     </Canvas>
 </Window>

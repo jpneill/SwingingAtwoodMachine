@@ -24,6 +24,8 @@ namespace SwingingAtwoodMachine
         DispatcherTimer timer;
         Ellipse ellipse = null;
         int x, y;
+        Color blue = Color.FromRgb(0, 0, 255);
+        Color black = Color.FromRgb(0, 0, 0);
 
         public MainWindow()
         {
@@ -41,7 +43,7 @@ namespace SwingingAtwoodMachine
             if (--loopCounter == 0)
                 timer.Stop();
 
-            ellipse = CreateEllipse(20, 20);
+            ellipse = CreateEllipse(20, 20, blue);
             PaintCanvas.Children.Add(ellipse);
             x++;
             y++;
@@ -51,9 +53,9 @@ namespace SwingingAtwoodMachine
         }
 
         //create an ellipse
-        public Ellipse CreateEllipse(int height, int width)
+        public Ellipse CreateEllipse(int height, int width, Color colour)
         {
-            SolidColorBrush fillBrush = new SolidColorBrush(Colors.Blue);
+            SolidColorBrush fillBrush = new SolidColorBrush(colour);
 
             return new Ellipse()
             {
