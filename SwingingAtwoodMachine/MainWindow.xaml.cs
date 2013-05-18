@@ -24,7 +24,7 @@ namespace SwingingAtwoodMachine
         DispatcherTimer timer;
         Ellipse ellipse = null;
         int x, y, i;
-        double k1, xPos, yPos;
+        double k1, k2, k3, k4, xPos, yPos;
 
         //constants
         Color blue = Color.FromRgb(0, 0, 255);
@@ -44,8 +44,8 @@ namespace SwingingAtwoodMachine
         double z;
         double L;
         double l;
-        double p_r;
-        double p_theta;
+        double omega;
+        double v;
         double h;
 
         //drawn objects
@@ -68,13 +68,13 @@ namespace SwingingAtwoodMachine
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            double p_theta2, p_r2, theta2, r2;
+            double omega2, v2, theta2, r2;
 
             //solve equations to give r2 and theta2 (these are the updated values from the new time-step)
-            p_theta2 = SolveEquation4(h, m, r, theta, p_theta);
-            theta2 = SolveEquation3(h, p_theta, m, r, theta);
-            p_r2 = SolveEquation2(h, p_theta, M, m, r, theta, p_r);
-            r2 = SolveEquation1(h, p_r, M, m, r);
+            v2 = SolveEquation1(h, r, omega, M, m, theta, v);
+            omega2 = SolveEquation2(h, v, omega, M, m, r, theta, omega);
+            r2 = SolveEquation3(h, v, r);
+            theta2 = SolveEquation4(h, omega, theta);
 
             //remove old pictures before drawing new ones
             PaintCanvas.Children.Remove(largeBob);
@@ -97,8 +97,8 @@ namespace SwingingAtwoodMachine
             //set the old values to the new values
             r = r2;
             theta = theta2;
-            p_r = p_r2;
-            p_theta = p_theta2;
+            omega = omega2;
+            v = v2;
 
             //draw the pictures
             PaintCanvas.Children.Add(largeLine);
@@ -157,15 +157,15 @@ namespace SwingingAtwoodMachine
         private void button1_Click(object sender, RoutedEventArgs e)
         {
             //set initial conditions            
-            M = 3; // Mass of large bob
+            M = 4; // Mass of large bob
             m = 1; // Mass of small bob
             theta = Math.PI / 2; //Initial angle of small bob from vertical (see diagram in #region 4 equations)
-            p_r = 0;
-            p_theta = 0;
+            omega = 0;
+            v = 0;
             r = 125;
             z = 185;
             L = 445;
-            h = 0.05;
+            h = 0.1;
             l = L - r - z;
 
             if (largeLine != null)
@@ -222,13 +222,13 @@ namespace SwingingAtwoodMachine
         /*
          * The four equations of motion are:
          * 
-         * 1)   dr/dt = p_r / (M + m)
+         * 1)   v'[t] = (r[t] * omega[t]^2 - M/m g + g Cos[theta]) / (M/m + 1)
          * 
-         * 2)   d(p_r)/dt = (p_theta) ^ 2 / (m * r^3) - M * g + m * g * Cos(theta)
+         * 2)   omega'[t] = -2 (v[t] * omega[t] + g Sin[theta]) / r
          * 
-         * 3)   dtheta/dt = p_theta / (m * r^2)
+         * 3)   r'[t] = v[t]
          * 
-         * 4)   d(p_theta)/dt = -m * g * r * Sin(theta)
+         * 4)   theta'[t] = omega[t]
          * 
          *      ________z_________
          *    |*                 |*\
@@ -241,10 +241,9 @@ namespace SwingingAtwoodMachine
          *    O M                         o m
          * 
          * Need to find r and theta.
-         * Solve equation 4 using initial r and theta, r_0 and theta_0
-         * Solve equation 3 from this to find new theta
-         * Solve equation 2 using 4 to find p_r
-         * Solve equation 1 to find new r
+         * Solve 1 to find v[t]
+         * Solve 2 to find omega[t]
+         * With these two values it is simple to solve equations 3 and 4
          * 
          * 4th order runge-kutta method:
          * y2 = y1 + (1 / 6) * (k1 + 2*k2 + 2*k3 + k4) * h
@@ -255,33 +254,36 @@ namespace SwingingAtwoodMachine
          * 
          */
 
-        public double SolveEquation1(double h, double p_r, double M, double m, double y1)
+        public double SolveEquation1(double h, double r, double omega, double M, double m, double theta, double y1)
         {
             //h is the step-size
             //y1 is the result from the previous step
             double y2; // final result
-            k1 = p_r / (M + m);
+            k1 = (r * omega * omega - (M / m) * g + g * Math.Cos(theta)) / (M / m + 1);
             return y2 = y1 + k1 * h;
         }
 
-        public double SolveEquation2(double h, double p_theta, double M, double m, double r, double theta, double y1)
+        public double SolveEquation2(double h, double v, double omega, double M, double m, double r, double theta, double y1)
         {
             double y2;
-            k1 = (p_theta * p_theta) / (m * r * r * r) - M * g + m * g * Math.Cos(theta);
+            k1 = -2 * (v * omega + g * Math.Sin(theta)) / r;
+            k2 = -2 * (v * (omega + (k1 * h) / 2) + g * Math.Sin(theta)) / r;
+            k3 = -2 * (v * (omega + (k2 * h) / 2) + g * Math.Sin(theta)) / r;
+            k4 = -2 * (v * (omega + (k3 * h)) + g * Math.Sin(theta)) / r;
+            return y2 = y1 + (k1 + 2 * k2 + 2 * k3 + k4) * (h / 6);
+        }
+
+        public double SolveEquation3(double h, double v, double y1)
+        {
+            double y2;
+            k1 = v;
             return y2 = y1 + k1 * h;
         }
 
-        public double SolveEquation3(double h, double p_theta, double m, double r, double y1)
+        public double SolveEquation4(double h, double omega, double y1)
         {
             double y2;
-            k1 = p_theta / (m * r * r);
-            return y2 = y1 + k1 * h;
-        }
-
-        public double SolveEquation4(double h, double m, double r, double theta, double y1)
-        {
-            double y2;
-            k1 = -m * g * r * Math.Sin(theta);
+            k1 = omega;
             return y2 = y1 + k1 * h;
         }
         #endregion
