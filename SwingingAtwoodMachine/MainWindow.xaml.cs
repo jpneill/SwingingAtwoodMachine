@@ -68,7 +68,7 @@ namespace SwingingAtwoodMachine
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            double omega2, v2, theta2, r2;
+            double omega2, v2, theta2, r2, deltaR;
 
             //solve equations to give r2 and theta2 (these are the updated values from the new time-step)
             v2 = SolveEquation1(h, r, omega, M, m, theta, v);
@@ -84,7 +84,8 @@ namespace SwingingAtwoodMachine
             PaintCanvas.Children.Remove(trace);
 
             //using r2 get l and the position of the large bob
-            l = L - r2 - z;
+            deltaR = r2 - r;
+            l -= deltaR;
             largeLine = CreateLine(leftPegX, leftPegY, leftPegX, leftPegY + l, black);
             largeBob = CreateEllipse(10 * M / m, 10 * M / m, blue);
 
@@ -224,7 +225,7 @@ namespace SwingingAtwoodMachine
          * 
          * 1)   v'[t] = (r[t] * omega[t]^2 - M/m g + g Cos[theta]) / (M/m + 1)
          * 
-         * 2)   omega'[t] = -2 (v[t] * omega[t] + g Sin[theta]) / r
+         * 2)   omega'[t] = (-2 * v[t] * omega[t] - g Sin[theta]) / r
          * 
          * 3)   r'[t] = v[t]
          * 
@@ -266,10 +267,10 @@ namespace SwingingAtwoodMachine
         public double SolveEquation2(double h, double v, double omega, double M, double m, double r, double theta, double y1)
         {
             double y2;
-            k1 = -2 * (v * omega + g * Math.Sin(theta)) / r;
-            k2 = -2 * (v * (omega + (k1 * h) / 2) + g * Math.Sin(theta)) / r;
-            k3 = -2 * (v * (omega + (k2 * h) / 2) + g * Math.Sin(theta)) / r;
-            k4 = -2 * (v * (omega + (k3 * h)) + g * Math.Sin(theta)) / r;
+            k1 = (-2 * v * omega - g * Math.Sin(theta)) / r;
+            k2 = (-2 * v * (omega + (k1 * h) / 2) - g * Math.Sin(theta)) / r;
+            k3 = (-2 * v * (omega + (k2 * h) / 2) - g * Math.Sin(theta)) / r;
+            k4 = (-2 * v * (omega + (k3 * h)) - g * Math.Sin(theta)) / r;
             return y2 = y1 + (k1 + 2 * k2 + 2 * k3 + k4) * (h / 6);
         }
 
